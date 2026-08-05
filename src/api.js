@@ -1,5 +1,6 @@
 // api.js
-const BASE_URL = "http://127.0.0.1:8000";
+// const BASE_URL = "http://127.0.0.1:8000";
+const BASE_URL = "https://cedar-policy-backend.onrender.com";
 
 async function apiFetch(path, token, options = {}) {
   const response = await fetch(`${BASE_URL}${path}`, {
