@@ -1,5 +1,5 @@
 import { useRoutes } from "react-router-dom";
-import Login from "./pages/login/login";
+import Login from "./pages/login/Login";
 import Layout from "./Layout";
 import Dashboard from "./pages/dashboard/Dashboard";
 import ProtectedRoute from "./ProtectedRoute";
