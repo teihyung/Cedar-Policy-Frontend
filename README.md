@@ -56,29 +56,35 @@ companies). Use alice + bob to demonstrate same-company, different-tenant
 isolation.
 
 ## Project structure
+```
+Cedar-Policy-Frontend/
+├── src/
+│   ├── pages/
+│   │   ├── login/
+│   │   │   └── Login.jsx
+│   │   └── dashboard/
+│   │       ├── Dashboard.jsx
+│   │       └── components/
+│   │           ├── TenantSelector.jsx
+│   │           ├── PolicyList.jsx
+│   │           └── PolicyUploadForm.jsx
+│   ├── AuthContext.jsx      # holds token/username in memory, login()/logout()
+│   ├── ProtectedRoute.jsx   # redirects to /login if no token is present in AuthContext
+│   ├── Layout.jsx           # full-height wrapper w/ padding, renders <Outlet /> for child routes
+│   ├── router.jsx           # route definitions
+│   ├── api.js               # all backend fetch calls in one place
+│   └── App.jsx
+├── package.json
+└── package-lock.json
 
-src/
-├── pages/
-│ ├── login/
-│ │ └── Login.jsx
-│ └── dashboard/
-│ ├── Dashboard.jsx
-│ └── components/
-│ ├── TenantSelector.jsx
-│ ├── PolicyList.jsx
-│ └── PolicyUploadForm.jsx
-├── AuthContext.jsx # holds token/username in memory, exposes login()/logout()
-├── ProtectedRoute.jsx # redirects to /login if there's no active session
-├── Layout.jsx # shared page shell
-├── router.jsx # route definitions
-├── api.js # all backend fetch calls in one place
-└── App.jsx
+```
 
 
-Components under `dashboard/components/` are kept "dumb" — they receive
-data and callbacks as props. `Dashboard.jsx` owns state and all API calls,
-and re-fetches the policy list after every upload/delete rather than
-patching local state manually.
+
+Components under `dashboard/components/` are presentational — they take
+data and callbacks as props and don't touch the API themselves.
+`Dashboard.jsx` centralizes all state and API calls, refetching the policy
+list after each upload/delete rather than manually reconciling local state.
 
 ## Features
 
@@ -117,3 +123,55 @@ npm run build
 
 Outputs static files to `dist/` — deployable to any static host (Vercel,
 Netlify, etc.).
+
+## Testing
+
+Component tests use Vitest + React Testing Library, colocated next to the
+components they test (e.g. `TenantSelector.test.jsx` sits beside
+`TenantSelector.jsx`).
+
+```bash
+npm run test
+```
+
+Coverage is intentionally targeted at components with real logic rather
+than exhaustive — full upload/list/download/delete flows and cross-tenant
+isolation scenarios are covered by the backend's automated test suite
+(where isolation is actually enforced) plus a documented manual pass
+through the UI.
+
+**Covered:**
+- `TenantSelector` — renders an option per tenant; calls `onChange` with
+  the selected tenant id
+- `PolicyUploadForm` — submit stays disabled until a file is chosen;
+  backend validation errors (e.g. a rejected Cedar file) surface in the
+  UI; form clears after a successful upload
+- `ProtectedRoute` — redirects to `/login` when there's no token; renders
+  its children when a token is present
+
+**Not covered by automated tests** (exercised manually instead — see
+[Manual test notes](#manual-test-notes)):
+- `Dashboard.jsx` — mostly orchestration/API wiring; more effectively
+  verified end-to-end than mocked in isolation
+- `PolicyList` — rendering is straightforward enough that manual
+  verification was sufficient for this scope
+- `api.js` — thin fetch wrappers around the backend; low value to unit
+  test independently of a real request
+
+## Manual test notes
+
+Exercised the running app end-to-end against the local backend, covering:
+
+- Login with each seeded user (alice, bob, carol)
+- Upload — valid and invalid `.cedar` files
+- Download and delete
+- Switching tenants via the dropdown
+- Cross-tenant isolation — confirmed carol (different company) and bob
+  (same company as alice, but scoped to fewer tenants) can't see files
+  outside their own tenant access
+
+This was a manual pass, not a tracked/ticketed QA process — reasonable
+given the scope of a take-home assignment. Automated coverage for
+tenant-isolation edge cases (including hand-crafted/hostile requests)
+lives in the backend test suite, which is where that requirement is
+actually enforced.
