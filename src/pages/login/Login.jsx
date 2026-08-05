@@ -36,7 +36,7 @@ function Login() {
   return (
     <Page>
       <Card>
-        <Title>SmartVerify</Title>
+        <Title>Policy Manager</Title>
         <Subtitle>Sign in to manage your Cedar policy files</Subtitle>
 
         <Form onSubmit={handleLogin}>
